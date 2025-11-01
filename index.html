@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>家常菜智能推荐助手</title>
+<style>
+  body {font-family: "Microsoft YaHei", sans-serif;background-color: #fff8f0;color: #333;margin: 0;padding: 20px;}
+  h1 {text-align: center;color: #d84315;}
+  .section {margin-top: 20px;}
+  .button-group {display: flex;flex-wrap: wrap;gap: 10px;justify-content: center;}
+  button {background-color: #ff7043;color: white;border: none;border-radius: 8px;padding: 10px 16px;font-size: 16px;cursor: pointer;}
+  button.selected {background-color: #d84315;}
+  .menu-list, .result-list {margin-top: 15px;text-align: left;background: #fff;padding: 15px;border-radius: 10px;}
+  .dish-item {padding: 6px 0;border-bottom: 1px solid #eee;}
+  .footer-btn {display: block;width: 100%;background: #d84315;color: white;padding: 12px;font-size: 18px;margin-top: 20px;border: none;border-radius: 10px;}
+  #popup {position: fixed;top: 10%;left: 10%;right: 10%;background: white;border: 2px solid #ff7043;border-radius: 10px;padding: 20px;display: none;z-index: 1000;}
+  #popup h3 {color: #d84315;}
+  #popup ul {padding-left: 20px;}
+</style>
+</head>
+<body>
+
+<h1>🍚 家常菜智能推荐助手</h1>
+
+<div id="step1" class="section">
+  <h2>① 请选择今天要做几菜几汤</h2>
+  <div class="button-group" id="dishCountGroup">
+    <button data-value="3菜1汤">三菜一汤</button>
+    <button data-value="4菜1汤">四菜一汤</button>
+    <button data-value="2菜1汤">两菜一汤</button>
+    <button data-value="3菜0汤">三菜无汤</button>
+    <button data-value="4菜0汤">四菜无汤</button>
+  </div>
+</div>
+
+<div id="step2" class="section" style="display:none;">
+  <h2>② 想吃什么肉类？</h2>
+  <div class="button-group" id="meatGroup">
+    <button data-value="猪肉">猪肉</button>
+    <button data-value="牛肉">牛肉</button>
+    <button data-value="鸡肉">鸡肉</button>
+    <button data-value="鱼肉">鱼肉</button>
+    <button data-value="鸭肉">鸭肉</button>
+    <button data-value="素菜">素菜</button>
+  </div>
+</div>
+
+<div id="step3" class="section" style="display:none;">
+  <h2>③ 想吃什么口味？</h2>
+  <div class="button-group" id="tasteGroup">
+    <button data-value="微辣">微辣</button>
+    <button data-value="香辣">香辣</button>
+    <button data-value="咸香">咸香</button>
+    <button data-value="清淡">清淡</button>
+    <button data-value="麻辣">麻辣</button>
+  </div>
+</div>
+
+<div id="step4" class="section" style="display:none;">
+  <h2>④ 推荐今日菜单</h2>
+  <div id="menuContainer" class="menu-list"></div>
+  <button class="footer-btn" id="submitBtn">提交今日菜单</button>
+</div>
+
+<div id="popup">
+  <h3>🛒 今日备菜清单</h3>
+  <div id="popupContent"></div>
+  <button class="footer-btn" onclick="closePopup()">关闭</button>
+</div>
+
+<script>
+const recipes = {
+  "猪肉": {"微辣": ["辣椒炒肉", "青椒炒五花", "蒜薹炒肉片"],"香辣": ["回锅肉", "干锅五花肉", "剁椒蒸肉饼"],"咸香": ["梅菜扣肉", "酱爆肉丝", "冬笋炒肉"],"麻辣": ["麻辣香锅", "香干炒肉"],"清淡": ["蒸猪肉丸", "香菇瘦肉粥"]},
+  "牛肉": {"微辣": ["青椒炒牛肉", "姜葱炒牛肉"],"香辣": ["孜然牛肉", "水煮牛肉"],"咸香": ["酱爆牛柳", "土豆炖牛肉"],"清淡": ["萝卜炖牛腩"]},
+  "鸡肉": {"微辣": ["辣子鸡丁", "香辣鸡块"],"香辣": ["口水鸡", "黄焖鸡"],"咸香": ["葱油鸡", "啤酒鸡"],"麻辣": ["麻辣鸡丝", "香锅鸡块"],"清淡": ["清蒸鸡腿", "虫草花炖鸡"]},
+  "鱼肉": {"微辣": ["剁椒鱼头", "香煎鲈鱼"],"香辣": ["酸菜鱼", "麻辣鱼片"],"咸香": ["红烧鲫鱼", "豆豉蒸鱼"],"清淡": ["清蒸鲈鱼", "黄豆芽鱼汤"]},
+  "鸭肉": {"微辣": ["青椒炒鸭片", "啤酒鸭"],"香辣": ["辣子鸭", "干锅鸭翅"],"咸香": ["板鸭炒蒜苗", "红烧鸭块"],"清淡": ["姜丝鸭汤"]},
+  "素菜": {"微辣": ["辣炒包菜", "干煸豆角"],"香辣": ["蒜蓉空心菜", "麻婆豆腐"],"咸香": ["香干炒芹菜", "土豆丝炒蛋"],"清淡": ["西红柿炒蛋", "清炒油麦菜"]},
+  "汤": ["紫菜蛋汤", "冬瓜排骨汤", "番茄蛋汤", "黄豆猪骨汤", "莲藕花生汤"]
+};
+
+let selected = {count: "", meat: "", taste: ""};
+let todayMenu = [];
+
+function selectOption(groupId, key) {
+  document.querySelectorAll(`#${groupId} button`).forEach(btn => btn.classList.remove("selected"));
+  event.target.classList.add("selected");
+  selected[key] = event.target.getAttribute("data-value");
+  if (groupId === "dishCountGroup") document.getElementById("step2").style.display = "block";
+  if (groupId === "meatGroup") document.getElementById("step3").style.display = "block";
+  if (groupId === "tasteGroup") showMenu();
+}
+
+document.querySelectorAll("#dishCountGroup button").forEach(b => b.onclick = e => selectOption("dishCountGroup", "count"));
+document.querySelectorAll("#meatGroup button").forEach(b => b.onclick = e => selectOption("meatGroup", "meat"));
+document.querySelectorAll("#tasteGroup button").forEach(b => b.onclick = e => selectOption("tasteGroup", "taste"));
+
+function showMenu() {
+  const [dishCount, soupCount] = selected.count.match(/(\d)菜(\d)汤/).slice(1,3).map(Number);
+  let dishes = recipes[selected.meat]?.[selected.taste] || [];
+  let soups = recipes["汤"];
+  const lastMenu = JSON.parse(localStorage.getItem("lastMenu") || "[]");
+  dishes = dishes.filter(d => !lastMenu.includes(d));
+  soups = soups.filter(s => !lastMenu.includes(s));
+  const pickRandom = (arr, n) => arr.sort(() => 0.5 - Math.random()).slice(0, n);
+  todayMenu = pickRandom(dishes, dishCount);
+  if (soupCount > 0) todayMenu = todayMenu.concat(pickRandom(soups, soupCount));
+  document.getElementById("menuContainer").innerHTML = todayMenu.map(d => `<div class='dish-item'>✅ ${d}</div>`).join("");
+  document.getElementById("step4").style.display = "block";
+}
+
+document.getElementById("submitBtn").onclick = () => {
+  localStorage.setItem("lastMenu", JSON.stringify(todayMenu));
+  const ingredients = todayMenu.map(d => `- ${d}：主要原料若干`).join("<br>");
+  document.getElementById("popupContent").innerHTML = `<h4>今日菜单：</h4><ul>${todayMenu.map(d=>"<li>"+d+"</li>").join("")}</ul><h4>原材料（参考备菜）：</h4>${ingredients}`;
+  document.getElementById("popup").style.display = "block";
+};
+
+function closePopup() { document.getElementById("popup").style.display = "none"; }
+</script>
+
+</body>
+</html>
