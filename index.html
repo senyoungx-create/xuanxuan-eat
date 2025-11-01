@@ -1,66 +1,69 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>家常菜智能推荐助手</title>
+<title>萱萱吃什么</title>
 <style>
-  body {font-family: "Microsoft YaHei", sans-serif;background-color: #fff8f0;color: #333;margin: 0;padding: 20px;}
-  h1 {text-align: center;color: #d84315;}
-  .section {margin-top: 20px;}
-  .button-group {display: flex;flex-wrap: wrap;gap: 10px;justify-content: center;}
-  button {background-color: #ff7043;color: white;border: none;border-radius: 8px;padding: 10px 16px;font-size: 16px;cursor: pointer;}
-  button.selected {background-color: #d84315;}
-  .menu-list, .result-list {margin-top: 15px;text-align: left;background: #fff;padding: 15px;border-radius: 10px;}
-  .dish-item {padding: 6px 0;border-bottom: 1px solid #eee;}
-  .footer-btn {display: block;width: 100%;background: #d84315;color: white;padding: 12px;font-size: 18px;margin-top: 20px;border: none;border-radius: 10px;}
-  #popup {position: fixed;top: 10%;left: 10%;right: 10%;background: white;border: 2px solid #ff7043;border-radius: 10px;padding: 20px;display: none;z-index: 1000;}
-  #popup h3 {color: #d84315;}
-  #popup ul {padding-left: 20px;}
+body { font-family: "Microsoft YaHei", sans-serif; background: #fff8f0; color: #333; padding: 20px; }
+h1 { text-align: center; color: #d84315; }
+.section { margin-top: 20px; }
+.button-group { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+button { background-color: #ff7043; color: white; border: none; border-radius: 8px; padding: 10px 16px; font-size: 16px; cursor: pointer; }
+button.selected { background-color: #d84315; }
+.menu-list, .result-list, .history-list { background: #fff; padding: 15px; border-radius: 10px; margin-top: 15px; }
+.footer-btn { display: block; width: 100%; background: #d84315; color: white; padding: 12px; font-size: 18px; margin-top: 20px; border: none; border-radius: 10px; }
+#popup { position: fixed; top: 10%; left: 10%; right: 10%; background: white; border: 2px solid #ff7043; border-radius: 10px; padding: 20px; display: none; z-index: 1000; }
+#popup h3 { color: #d84315; }
+.cart { margin-top: 15px; }
 </style>
 </head>
 <body>
+<h1>🍚 萱萱吃什么</h1>
 
-<h1>🍚 家常菜智能推荐助手</h1>
+<div id="modeSelect" class="section">
+  <h2>请选择模式</h2>
+  <div class="button-group">
+    <button onclick="selectMode('random')">🍀 随机推荐模式</button>
+    <button onclick="selectMode('custom')">🛒 自由组合模式</button>
+  </div>
+  <button class="footer-btn" onclick="showHistory()">📅 查看历史记录</button>
+  <button class="footer-btn" onclick="clearHistory()">🧹 清除历史记录</button>
+</div>
 
-<div id="step1" class="section">
-  <h2>① 请选择今天要做几菜几汤</h2>
-  <div class="button-group" id="dishCountGroup">
+<div id="randomMode" class="section" style="display:none;">
+  <h2>选择几菜几汤</h2>
+  <div class="button-group" id="countGroup">
     <button data-value="3菜1汤">三菜一汤</button>
     <button data-value="4菜1汤">四菜一汤</button>
-    <button data-value="2菜1汤">两菜一汤</button>
     <button data-value="3菜0汤">三菜无汤</button>
-    <button data-value="4菜0汤">四菜无汤</button>
+    <button data-value="2菜1汤">两菜一汤</button>
   </div>
 </div>
 
-<div id="step2" class="section" style="display:none;">
-  <h2>② 想吃什么肉类？</h2>
-  <div class="button-group" id="meatGroup">
-    <button data-value="猪肉">猪肉</button>
-    <button data-value="牛肉">牛肉</button>
-    <button data-value="鸡肉">鸡肉</button>
-    <button data-value="鱼肉">鱼肉</button>
-    <button data-value="鸭肉">鸭肉</button>
-    <button data-value="素菜">素菜</button>
-  </div>
+<div id="menuContainer" class="section" style="display:none;">
+  <h2>今日推荐</h2>
+  <div id="menuList" class="menu-list"></div>
+  <button class="footer-btn" onclick="submitMenu()">提交今日菜单</button>
 </div>
 
-<div id="step3" class="section" style="display:none;">
-  <h2>③ 想吃什么口味？</h2>
-  <div class="button-group" id="tasteGroup">
-    <button data-value="微辣">微辣</button>
-    <button data-value="香辣">香辣</button>
-    <button data-value="咸香">咸香</button>
-    <button data-value="清淡">清淡</button>
-    <button data-value="麻辣">麻辣</button>
-  </div>
+<div id="customMode" class="section" style="display:none;">
+  <h2>请选择菜品添加到购物车</h2>
+  <div id="customList" class="menu-list"></div>
+  <button class="footer-btn" onclick="viewCart()">🛒 查看购物车</button>
 </div>
 
-<div id="step4" class="section" style="display:none;">
-  <h2>④ 推荐今日菜单</h2>
-  <div id="menuContainer" class="menu-list"></div>
-  <button class="footer-btn" id="submitBtn">提交今日菜单</button>
+<div id="cartContainer" class="section" style="display:none;">
+  <h2>购物车</h2>
+  <div id="cartList" class="cart"></div>
+  <button class="footer-btn" onclick="submitMenu()">提交菜单</button>
+</div>
+
+<div id="historyContainer" class="section" style="display:none;">
+  <h2>历史菜单</h2>
+  <div id="historyList" class="history-list"></div>
+  <button class="footer-btn" onclick="backHome()">返回首页</button>
 </div>
 
 <div id="popup">
@@ -71,54 +74,138 @@
 
 <script>
 const recipes = {
-  "猪肉": {"微辣": ["辣椒炒肉", "青椒炒五花", "蒜薹炒肉片"],"香辣": ["回锅肉", "干锅五花肉", "剁椒蒸肉饼"],"咸香": ["梅菜扣肉", "酱爆肉丝", "冬笋炒肉"],"麻辣": ["麻辣香锅", "香干炒肉"],"清淡": ["蒸猪肉丸", "香菇瘦肉粥"]},
-  "牛肉": {"微辣": ["青椒炒牛肉", "姜葱炒牛肉"],"香辣": ["孜然牛肉", "水煮牛肉"],"咸香": ["酱爆牛柳", "土豆炖牛肉"],"清淡": ["萝卜炖牛腩"]},
-  "鸡肉": {"微辣": ["辣子鸡丁", "香辣鸡块"],"香辣": ["口水鸡", "黄焖鸡"],"咸香": ["葱油鸡", "啤酒鸡"],"麻辣": ["麻辣鸡丝", "香锅鸡块"],"清淡": ["清蒸鸡腿", "虫草花炖鸡"]},
-  "鱼肉": {"微辣": ["剁椒鱼头", "香煎鲈鱼"],"香辣": ["酸菜鱼", "麻辣鱼片"],"咸香": ["红烧鲫鱼", "豆豉蒸鱼"],"清淡": ["清蒸鲈鱼", "黄豆芽鱼汤"]},
-  "鸭肉": {"微辣": ["青椒炒鸭片", "啤酒鸭"],"香辣": ["辣子鸭", "干锅鸭翅"],"咸香": ["板鸭炒蒜苗", "红烧鸭块"],"清淡": ["姜丝鸭汤"]},
-  "素菜": {"微辣": ["辣炒包菜", "干煸豆角"],"香辣": ["蒜蓉空心菜", "麻婆豆腐"],"咸香": ["香干炒芹菜", "土豆丝炒蛋"],"清淡": ["西红柿炒蛋", "清炒油麦菜"]},
-  "汤": ["紫菜蛋汤", "冬瓜排骨汤", "番茄蛋汤", "黄豆猪骨汤", "莲藕花生汤"]
+  "荤菜": {
+    "辣椒炒肉": ["五花肉", "青椒", "蒜", "酱油"],
+    "回锅肉": ["五花肉", "豆瓣酱", "蒜苗"],
+    "啤酒鸭": ["鸭肉", "啤酒", "姜", "蒜", "老抽"],
+    "黄焖鸡": ["鸡腿肉", "姜", "蒜", "料酒", "酱油"],
+    "剁椒鱼头": ["鱼头", "剁椒", "姜", "蒜"],
+    "孜然牛肉": ["牛肉", "孜然粉", "洋葱"],
+    "梅菜扣肉": ["五花肉", "梅干菜"],
+    "麻辣香锅": ["牛肉片", "莲藕", "青椒", "豆皮"]
+  },
+  "素菜": {
+    "西红柿炒蛋": ["鸡蛋", "西红柿", "盐"],
+    "清炒油麦菜": ["油麦菜", "蒜"],
+    "香干炒芹菜": ["芹菜", "香干"],
+    "干煸豆角": ["豆角", "辣椒", "蒜"],
+    "蒜蓉空心菜": ["空心菜", "蒜"],
+    "麻婆豆腐": ["豆腐", "牛肉末", "豆瓣酱"],
+    "炒土豆丝": ["土豆", "青椒", "醋"]
+  },
+  "汤": {
+    "紫菜蛋汤": ["紫菜", "鸡蛋", "葱"],
+    "冬瓜排骨汤": ["冬瓜", "排骨", "姜"],
+    "番茄蛋汤": ["西红柿", "鸡蛋", "盐"],
+    "黄豆猪骨汤": ["黄豆", "猪骨", "姜"],
+    "莲藕花生汤": ["莲藕", "花生", "排骨"]
+  }
 };
 
-let selected = {count: "", meat: "", taste: ""};
-let todayMenu = [];
+let selectedMode = "", selectedCount = "", todayMenu = [], cart = [];
 
-function selectOption(groupId, key) {
-  document.querySelectorAll(`#${groupId} button`).forEach(btn => btn.classList.remove("selected"));
-  event.target.classList.add("selected");
-  selected[key] = event.target.getAttribute("data-value");
-  if (groupId === "dishCountGroup") document.getElementById("step2").style.display = "block";
-  if (groupId === "meatGroup") document.getElementById("step3").style.display = "block";
-  if (groupId === "tasteGroup") showMenu();
+function selectMode(mode) {
+  selectedMode = mode;
+  document.getElementById("modeSelect").style.display = "none";
+  if (mode === "random") document.getElementById("randomMode").style.display = "block";
+  else showCustomList();
 }
 
-document.querySelectorAll("#dishCountGroup button").forEach(b => b.onclick = e => selectOption("dishCountGroup", "count"));
-document.querySelectorAll("#meatGroup button").forEach(b => b.onclick = e => selectOption("meatGroup", "meat"));
-document.querySelectorAll("#tasteGroup button").forEach(b => b.onclick = e => selectOption("tasteGroup", "taste"));
+document.querySelectorAll("#countGroup button").forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll("#countGroup button").forEach(btn => btn.classList.remove("selected"));
+    b.classList.add("selected");
+    selectedCount = b.getAttribute("data-value");
+    generateRandomMenu();
+  };
+});
 
-function showMenu() {
-  const [dishCount, soupCount] = selected.count.match(/(\d)菜(\d)汤/).slice(1,3).map(Number);
-  let dishes = recipes[selected.meat]?.[selected.taste] || [];
-  let soups = recipes["汤"];
+function generateRandomMenu() {
+  const [dishCount, soupCount] = selectedCount.match(/(\d)菜(\d)汤/).slice(1,3).map(Number);
+  const meatDishes = Object.keys(recipes["荤菜"]);
+  const vegDishes = Object.keys(recipes["素菜"]);
+  const soups = Object.keys(recipes["汤"]);
   const lastMenu = JSON.parse(localStorage.getItem("lastMenu") || "[]");
-  dishes = dishes.filter(d => !lastMenu.includes(d));
-  soups = soups.filter(s => !lastMenu.includes(s));
-  const pickRandom = (arr, n) => arr.sort(() => 0.5 - Math.random()).slice(0, n);
-  todayMenu = pickRandom(dishes, dishCount);
-  if (soupCount > 0) todayMenu = todayMenu.concat(pickRandom(soups, soupCount));
-  document.getElementById("menuContainer").innerHTML = todayMenu.map(d => `<div class='dish-item'>✅ ${d}</div>`).join("");
-  document.getElementById("step4").style.display = "block";
+
+  function pick(arr, n) { return arr.sort(() => 0.5 - Math.random()).slice(0, n); }
+
+  let meats = pick(meatDishes.filter(x => !lastMenu.includes(x)), Math.max(1, Math.floor(dishCount/2)));
+  let vegs = pick(vegDishes.filter(x => !lastMenu.includes(x)), dishCount - meats.length);
+  let selected = meats.concat(vegs);
+  if (soupCount > 0) selected = selected.concat(pick(soups, soupCount));
+
+  todayMenu = selected;
+  showMenuList(selected);
 }
 
-document.getElementById("submitBtn").onclick = () => {
-  localStorage.setItem("lastMenu", JSON.stringify(todayMenu));
-  const ingredients = todayMenu.map(d => `- ${d}：主要原料若干`).join("<br>");
-  document.getElementById("popupContent").innerHTML = `<h4>今日菜单：</h4><ul>${todayMenu.map(d=>"<li>"+d+"</li>").join("")}</ul><h4>原材料（参考备菜）：</h4>${ingredients}`;
+function showMenuList(list) {
+  document.getElementById("randomMode").style.display = "none";
+  document.getElementById("menuContainer").style.display = "block";
+  document.getElementById("menuList").innerHTML = list.map(d => `<div>✅ ${d}（${(recipes["荤菜"][d] || recipes["素菜"][d] || recipes["汤"][d]).join("、")}）</div>`).join("");
+}
+
+function showCustomList() {
+  document.getElementById("customMode").style.display = "block";
+  let html = "";
+  for (let cat in recipes) {
+    html += `<h3>${cat}</h3>`;
+    for (let dish in recipes[cat]) {
+      html += `<div><button onclick="addToCart('${dish}')">${dish}</button> (${recipes[cat][dish].join("、")})</div>`;
+    }
+  }
+  document.getElementById("customList").innerHTML = html;
+}
+
+function addToCart(dish) {
+  if (!cart.includes(dish)) cart.push(dish);
+  alert(dish + " 已加入购物车");
+}
+
+function viewCart() {
+  document.getElementById("customMode").style.display = "none";
+  document.getElementById("cartContainer").style.display = "block";
+  document.getElementById("cartList").innerHTML = cart.map(d => `<div>${d} <button onclick="removeFromCart('${d}')">❌ 移除</button></div>`).join("");
+}
+
+function removeFromCart(d) {
+  cart = cart.filter(x => x !== d);
+  viewCart();
+}
+
+function submitMenu() {
+  const list = selectedMode === "custom" ? cart : todayMenu;
+  if (!list || list.length === 0) return alert("还没有选择菜！");
+  localStorage.setItem("lastMenu", JSON.stringify(list));
+  const history = JSON.parse(localStorage.getItem("history") || "[]");
+  history.push({ date: new Date().toLocaleString(), dishes: list });
+  localStorage.setItem("history", JSON.stringify(history));
+
+  let html = "<h4>今日菜单：</h4><ul>";
+  html += list.map(d => `<li>${d}</li>`).join("") + "</ul><h4>原材料：</h4>";
+  list.forEach(d => { let ing = recipes["荤菜"][d] || recipes["素菜"][d] || recipes["汤"][d] || []; html += `${d}：${ing.join("、")}<br>`; });
+  document.getElementById("popupContent").innerHTML = html;
   document.getElementById("popup").style.display = "block";
-};
+}
 
-function closePopup() { document.getElementById("popup").style.display = "none"; }
+function closePopup() { document.getElementById("popup").style.display = "none"; location.reload(); }
+
+function showHistory() {
+  document.getElementById("modeSelect").style.display = "none";
+  document.getElementById("historyContainer").style.display = "block";
+  const history = JSON.parse(localStorage.getItem("history") || "[]");
+  if (history.length === 0) { document.getElementById("historyList").innerHTML = "暂无历史记录"; return; }
+  document.getElementById("historyList").innerHTML = history.map(h => `<div>📅 ${h.date}<br>${h.dishes.join("、")}</div><hr>`).join("");
+}
+
+function clearHistory() {
+  if (confirm("确定清除全部历史记录吗？")) {
+    localStorage.clear();
+    alert("已清除！");
+    location.reload();
+  }
+}
+
+function backHome() { location.reload(); }
 </script>
-
 </body>
 </html>
